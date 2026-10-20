@@ -5,7 +5,7 @@
   "private": true,
   "scripts": {
     "dev": "python3 -m http.server 4173 --directory public",
-    "check": "node --check public/config.js && node --check public/shopify.js && node --check public/app.js",
+    "check": "node --check public/config.js && node --check public/shopify.js && node --check public/brand.js && node --check public/app.js",
     "test": "node --test",
     "build": "node --input-type=module -e \"import { rmSync, cpSync } from 'node:fs'; rmSync('dist', { recursive: true, force: true }); cpSync('public', 'dist', { recursive: true });\""
   },

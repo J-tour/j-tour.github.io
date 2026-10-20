@@ -100,6 +100,23 @@ test("checkout host and path allowlist blocks open redirects and deceptive hosts
   ]) assert.equal(safeCheckoutUrl(value, config.shopDomain), "", value);
   assert.equal(safeCheckoutUrl(cart().checkoutUrl, ""), "");
 });
+test("explicit checkoutDomain permits only the merchant's exact custom HTTPS hostname", () => {
+  const domain = "checkout.jtour.example";
+  const url = `https://${domain}/checkouts/co/example`;
+  assert.equal(safeCheckoutUrl(url, config.shopDomain), "");
+  assert.equal(safeCheckoutUrl(url, config.shopDomain, domain), url);
+  assert.equal(safeCheckoutUrl(`https://attacker.${domain}/checkouts/a`, config.shopDomain, domain), "");
+  assert.equal(safeCheckoutUrl(`https://${domain}.evil.example/checkouts/a`, config.shopDomain, domain), "");
+  assert.equal(safeCheckoutUrl(`http://${domain}/checkouts/a`, config.shopDomain, domain), "");
+  assert.equal(safeCheckoutUrl("https://other-shop.myshopify.com/checkouts/a", config.shopDomain, domain), "");
+  assert.equal(safeCheckoutUrl(url, config.shopDomain, "*.jtour.example"), "");
+  assert.equal(normalizeConfig({ ...config, checkoutDomain: " Checkout.Jtour.Example " }).checkoutDomain, domain);
+  for (const checkoutDomain of [
+    "https://checkout.jtour.example", "*.jtour.example", "checkout.jtour.example/path",
+    "checkout.jtour.example:443", "user@checkout.jtour.example", "checkout.jtour.example?x",
+    "checkout.jtour.example#x", "127.0.0.1", "localhost", "shop.localhost", "shop.internal", 123,
+  ]) assert.throws(() => normalizeConfig({ ...config, checkoutDomain }), isCode("CONFIG"), String(checkoutDomain));
+});
 test("images require HTTPS, without credentials, ports or local addresses", () => {
   assert.equal(safeImageUrl("https://cdn.shopify.com/s/files/image.jpg"), "https://cdn.shopify.com/s/files/image.jpg");
   for (const value of ["http://cdn.shopify.com/a", "data:image/svg+xml,a", "javascript:a", "/local.svg", undefined, "https://untrusted-user@cdn.shopify.com/a", "https://localhost/a", "https://127.0.0.1/a", "https://[::1]/a", "https://cdn.shopify.com:8443/a"]) {
@@ -364,6 +381,14 @@ test("untrusted checkout URLs are removed from the authoritative cart", async ()
   const result = await clientWithCart(mock).getCart();
   assert.equal(result.checkoutUrl, "");
 });
+test("authoritative carts accept the configured custom checkout host and reject others", async () => {
+  const checkoutDomain = "shop.jtour.example";
+  const url = `https://${checkoutDomain}/checkouts/co/example`;
+  const mock = mockFetch({ data: { cart: cart({ checkoutUrl: url }) } }, { data: { cart: cart({ checkoutUrl: "https://attacker.example/checkouts/a" }) } });
+  const client = new StorefrontClient({ ...config, checkoutDomain }, { fetch: mock.fetch, storage: memoryStorage(storedCart()) });
+  assert.equal((await client.getCart()).checkoutUrl, url);
+  assert.equal((await client.getCart()).checkoutUrl, "");
+});
 test("cart line pagination retains server costs rather than recomputing totals", async () => {
   const nextLine = { ...cart().lines.nodes[0], id: "gid://shopify/CartLine/second", quantity: 1 };
   const mock = mockFetch(
@@ -388,6 +413,42 @@ test("failed mutation-followup pagination keeps the returned cart ID for read re
   await client.getCart();
   assert.equal(client.cart.totalQuantity, 2);
   assert.equal(client.needsRefresh, false);
+});
+test("committed mutation followed by GraphQL pagination failure blocks writes until successful refresh", async () => {
+  const mock = mockFetch(
+    { data: { cartCreate: { cart: cart({ lines: { nodes: [], pageInfo: { hasNextPage: true, endCursor: "next" } } }), userErrors: [] } } },
+    { errors: [{ message: "Internal error loading cart lines" }] },
+    { data: { cart: cart() } },
+    { data: { cartLinesAdd: { cart: cart(), userErrors: [] } } },
+  );
+  const storage = memoryStorage();
+  const client = new StorefrontClient(config, { fetch: mock.fetch, storage });
+  await assert.rejects(client.add(variantId), isCode("GRAPHQL"));
+  assert.equal(client.cartId, cartId);
+  assert.equal(JSON.parse(storage.map.get(STORAGE_KEY)).id, cartId);
+  assert.equal(client.needsRefresh, true);
+  await assert.rejects(client.add(variantId), isCode("REFRESH_REQUIRED"));
+  await assert.rejects(client.update(lineId, 1), isCode("REFRESH_REQUIRED"));
+  await assert.rejects(client.remove(lineId), isCode("REFRESH_REQUIRED"));
+  assert.equal(mock.calls.length, 2);
+  await client.getCart();
+  assert.equal(client.needsRefresh, false);
+  await client.add(variantId);
+  assert.equal(mock.calls.length, 4);
+});
+test("malformed follow-up pagination also locks accepted mutations, including partial userErrors", async () => {
+  for (const userErrors of [[], [{ field: ["lines"], code: "INVALID", message: "Some items unavailable" }]]) {
+    const mock = mockFetch(
+      { data: { cartCreate: { cart: cart({ lines: { nodes: [], pageInfo: { hasNextPage: true, endCursor: "next" } } }), userErrors } } },
+      { data: { cart: { lines: null } } },
+    );
+    const client = new StorefrontClient(config, { fetch: mock.fetch, storage: memoryStorage() });
+    await assert.rejects(client.add(variantId), isCode("MUTATION_UNCERTAIN"));
+    assert.equal(client.cartId, cartId);
+    assert.equal(client.needsRefresh, true);
+    await assert.rejects(client.add(variantId), isCode("REFRESH_REQUIRED"));
+    assert.equal(mock.calls.length, 2);
+  }
 });
 test("unavailable browser storage never prevents an accepted transaction", async () => {
   const storage = { getItem() { return null; }, removeItem() {}, setItem() { throw new Error("quota"); } };

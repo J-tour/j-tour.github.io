@@ -4,10 +4,14 @@ export default {
   shopDomain: "", // Example: "your-store.myshopify.com" (not a full URL)
   storefrontAccessToken: "",
   apiVersion: "2026-07",
+  // Optional exact primary checkout hostname, e.g. "shop.your-brand.com".
+  // No URL scheme, path, port, wildcard, or credentials.
+  checkoutDomain: "",
   // Optional: https://your-store.myshopify.com/account or
   // https://shopify.com/123456789/account (your official hosted customer account).
   customerAccountUrl: "",
   // Optional published Shopify Online Store page handles, fetched through Storefront.
+  // Uses the API's short, plain-text bodySummary (up to 200 characters), not rich HTML.
   pageHandles: { story: "", contact: "" },
   brand: {
     name: "J-TOUR",

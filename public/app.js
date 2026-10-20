@@ -1,5 +1,6 @@
 import rawConfig from "./config.js";
 import { StorefrontClient, formatMoney, safeImageUrl } from "./shopify.js";
+import { applyBrand } from "./brand.js";
 
 const $ = id => document.getElementById(id);
 const node = (tag, className, text) => {
@@ -95,12 +96,7 @@ $("main-nav").addEventListener("keydown", event => {
   }
 });
 $("year").textContent = String(new Date().getFullYear());
-document.title = `${config.brand.name}｜${config.brand.tagline}`;
-for (const wordmark of document.querySelectorAll(".wordmark")) {
-  wordmark.firstChild.textContent = config.brand.name;
-  wordmark.setAttribute("aria-label", `${config.brand.name} 首頁`);
-}
-document.querySelector(".footer-top > p").textContent = config.brand.tagline;
+applyBrand(document, config.brand);
 $("mode-notice").textContent = configError || (demo ? "展示模式 · 品牌與商品皆為示例，無法購買或結帳" : "品牌視覺文案為示例 · 即時商品與安全結帳由 Shopify 提供");
 if (configError) $("mode-notice").classList.add("is-error");
 $("catalog-note").textContent = demo ? "展示商品 · 非實際販售\n價格、規格與圖片均為示例。" : "與 Shopify 商店同步的商品。\n庫存與最終金額以結帳頁為準。";

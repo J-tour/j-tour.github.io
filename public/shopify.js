@@ -3,6 +3,7 @@ const HANDLE = /^[a-z0-9][a-z0-9-]{0,100}$/;
 const CART_ID = /^gid:\/\/shopify\/Cart\/[^\s<>]{1,1900}$/;
 const VARIANT_ID = /^gid:\/\/shopify\/ProductVariant\/\d+$/;
 const LINE_ID = /^gid:\/\/shopify\/CartLine\/[^\s<>]{1,1900}$/;
+const HOSTNAME = /^(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z](?:[a-z0-9-]{0,61}[a-z0-9])?$/;
 const MONEY = `amount currencyCode`;
 const PRODUCT_BASE = `id handle title description productType availableForSale
   featuredImage { url altText width height }
@@ -40,11 +41,18 @@ export function safeImageUrl(value) {
   return url.href;
 }
 
-export function safeCheckoutUrl(value, shopDomain) {
+function validCheckoutDomain(value) {
+  return typeof value === "string" && HOSTNAME.test(value) &&
+    !/(?:^|\.)(?:localhost|local|localdomain|internal)$/.test(value);
+}
+
+export function safeCheckoutUrl(value, shopDomain, checkoutDomain = "") {
   const url = safeHttps(value);
   if (!url || !SHOP_DOMAIN.test(shopDomain || "")) return "";
-  // Only this merchant's canonical Shopify domain and Shopify's checkout host.
-  if (![shopDomain, "checkout.shopify.com"].includes(url.hostname)) return "";
+  // Only the canonical shop, Shopify checkout, and an explicitly configured host.
+  const allowed = [shopDomain, "checkout.shopify.com"];
+  if (validCheckoutDomain(checkoutDomain)) allowed.push(checkoutDomain);
+  if (!allowed.includes(url.hostname)) return "";
   if (!/^\/(?:checkouts?\/|cart\/c\/)/.test(url.pathname)) return "";
   return url.href;
 }
@@ -73,6 +81,10 @@ export function normalizeConfig(raw = {}) {
     throw new StorefrontError("Shopify 設定不完整或不正確，請檢查商店網域與公開 Storefront 權杖。", "CONFIG");
   }
   if (apiVersion !== "2026-07") throw new StorefrontError("請使用已支援的 Shopify API 版本 2026-07。", "CONFIG");
+  const checkoutDomain = typeof raw.checkoutDomain === "string" ? raw.checkoutDomain.trim().toLowerCase() : "";
+  if ((raw.checkoutDomain && typeof raw.checkoutDomain !== "string") || (checkoutDomain && !validCheckoutDomain(checkoutDomain))) {
+    throw new StorefrontError("結帳網域必須是完整主機名稱，不可包含通訊協定、路徑、連接埠或萬用字元。", "CONFIG");
+  }
   const pageHandles = {};
   for (const key of ["story", "contact"]) {
     const handle = raw.pageHandles?.[key] || "";
@@ -84,7 +96,7 @@ export function normalizeConfig(raw = {}) {
     ? brand.contactEmail : "";
   const social = safeHttps(brand.instagramUrl);
   return {
-    shopDomain, token, apiVersion, configured, pageHandles,
+    shopDomain, token, apiVersion, checkoutDomain, configured, pageHandles,
     customerAccountUrl: safeAccountUrl(raw.customerAccountUrl, shopDomain),
     adminUrl: adminUrl(shopDomain),
     brand: {
@@ -228,10 +240,21 @@ export class StorefrontClient {
       info = data.cart.lines.pageInfo;
     }
     cart.lines.pageInfo = info;
-    cart.checkoutUrl = safeCheckoutUrl(cart.checkoutUrl, this.config.shopDomain);
+    cart.checkoutUrl = safeCheckoutUrl(cart.checkoutUrl, this.config.shopDomain, this.config.checkoutDomain);
     this.cart = cart;
     this.persist(cart.id);
     return cart;
+  }
+
+  async acceptMutationCart(cart) {
+    // Shopify may have committed the mutation before a follow-up read fails.
+    if (CART_ID.test(cart?.id)) this.persist(cart.id);
+    try {
+      return await this.acceptCart(cart);
+    } catch (error) {
+      this.needsRefresh = true;
+      throw error;
+    }
   }
 
   async getCart() {
@@ -278,7 +301,7 @@ export class StorefrontClient {
           /cart.*(?:not found|does not exist|expired|invalid)|(?:invalid|expired).*cart/i.test(error.message || "") ||
           (["INVALID", "NOT_FOUND"].includes(error.code) && error.field?.includes("cartId")));
         // Preserve a returned cart even when a subset of lines was rejected.
-        if (payload.cart) await this.acceptCart(payload.cart);
+        if (payload.cart) await this.acceptMutationCart(payload.cart);
         if (stale) { this.cart = null; this.persist(null); }
         throw new StorefrontError(stale ? "購物袋已失效，請重新選購。未自動重送商品。" : "商品或數量無法更新，請確認庫存與購物袋內容後再試。", stale ? "STALE_CART" : "USER_ERRORS", payload.userErrors);
       }
@@ -287,10 +310,7 @@ export class StorefrontClient {
         this.persist(null);
         throw new StorefrontError("購物袋已失效，請重新選購。未自動重送商品。", "STALE_CART");
       }
-      // Save the returned cart ID before following pagination, so reads can recover
-      // an accepted mutation even if its subsequent line fetch fails.
-      if (CART_ID.test(payload.cart.id)) this.persist(payload.cart.id);
-      return await this.acceptCart(payload.cart);
+      return await this.acceptMutationCart(payload.cart);
     } catch (error) {
       if (error.code === "MUTATION_UNCERTAIN" || error.code === "NETWORK") this.needsRefresh = true;
       throw error;
