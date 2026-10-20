@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f6f5ef">
+  <meta name="description" content="J-TOUR 旅行與生活風格選物。把日常，過成一段旅程。本站品牌與商品文案為示例，實際販售資訊以連接的 Shopify 商店為準。">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' https:; connect-src 'self' https://*.myshopify.com; font-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; upgrade-insecure-requests">
+  <title>J-TOUR｜把日常，過成一段旅程</title>
+  <link rel="icon" type="image/svg+xml" href="./assets/mark.svg">
+  <link rel="stylesheet" href="./styles.css">
+  <script type="module" src="./app.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">跳至主要內容</a>
+  <div class="announcement" id="mode-notice">品牌與商品示例網站 · 正在確認商店連線</div>
+  <header class="site-header">
+    <div class="header-inner wrap">
+      <a class="wordmark" href="./" aria-label="J-TOUR 首頁">J-TOUR<span class="brand-dot" aria-hidden="true">●</span></a>
+      <button class="menu-toggle icon-button" id="menu-toggle" aria-expanded="false" aria-controls="main-nav" aria-label="開啟導覽選單"><span aria-hidden="true">☰</span></button>
+      <nav class="main-nav" id="main-nav" aria-label="主要導覽">
+        <a href="#collection">日常選物</a><a href="#story">關於我們</a><a href="#journal">旅途靈感</a><a href="#contact">聯絡我們</a>
+      </nav>
+      <button class="bag-button" id="open-cart" aria-haspopup="dialog" aria-controls="cart-dialog">
+        <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M5 7h14l1 14H4L5 7Z"/><path d="M8 8V6a4 4 0 0 1 8 0v2"/></svg>
+        <span class="bag-label">購物袋</span><span class="bag-count" id="cart-count">0</span>
+      </button>
+    </div>
+  </header>
+  <main id="main">
+    <section class="hero wrap" aria-labelledby="hero-title">
+      <div class="hero-copy">
+        <p class="eyebrow"><span class="small-line"></span> EVERYDAY, A LITTLE JOURNEY</p>
+        <h1 id="hero-title">把日常，<br>過成一段<span class="serif-accent">旅程。</span></h1>
+        <p class="hero-description">為每一次出發，留一點想像。<br>輕盈的行囊、喜歡的器物，與剛剛好的生活。</p>
+        <a class="button primary" href="#collection">探索日常選物 <span aria-hidden="true">↗</span></a>
+        <div class="hero-footnote"><span class="tiny-compass" aria-hidden="true">✳</span><span>TAKE LESS. FEEL MORE.<br><span class="muted">帶少一點，感受多一點。</span></span></div>
+      </div>
+      <div class="hero-art">
+        <img src="./assets/journey.svg" alt="原創風景插畫：沿著蜿蜒小路，走向山巒與海岸" width="800" height="960" fetchpriority="high">
+        <div class="hero-caption"><span>慢一點，風景就在身邊。</span><span aria-hidden="true">01 — THE EVERYDAY ESCAPE</span></div>
+        <span class="image-label">J-TOUR 原創示意插畫</span>
+      </div>
+    </section>
+    <div class="values-strip wrap" aria-label="品牌理念（示例）">
+      <p><span aria-hidden="true">↗</span> 為日常，也為遠方</p><p><span aria-hidden="true">◌</span> 少一點負擔，多一點自在</p><p><span aria-hidden="true">✳</span> 用喜歡的物件，收藏生活</p>
+    </div>
+    <section class="collection section-space wrap" id="collection" aria-labelledby="collection-title">
+      <div class="section-heading">
+        <div><p class="eyebrow">CURATED FOR YOUR EVERYDAY</p><h2 id="collection-title">陪你出發的<span class="serif-accent">好物</span></h2></div>
+        <p class="section-intro" id="catalog-note">不多不少，剛剛好。<br>為生活挑選值得同行的夥伴。</p>
+      </div>
+      <div class="catalog-toolbar">
+        <div class="filters" id="filters" role="group" aria-label="商品分類"></div>
+        <label class="search-field"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="10" cy="10" r="6"/><path d="m15 15 6 6"/></svg><span class="sr-only">搜尋已載入的商品</span><input type="search" id="search" placeholder="搜尋已載入商品" maxlength="100"></label>
+      </div>
+      <p class="catalog-status" id="catalog-status" role="status">正在載入選物…</p>
+      <div class="product-grid" id="product-grid" aria-busy="true"></div>
+      <div class="load-more"><button class="button secondary" id="load-more" hidden>載入更多選物 <span aria-hidden="true">↓</span></button><button class="button secondary" id="retry-products" hidden>重新載入商品</button></div>
+    </section>
+    <section class="story-section" id="story" aria-labelledby="story-title">
+      <div class="story-inner wrap">
+        <div class="story-visual"><div class="story-stamp" aria-hidden="true">J<span>TRAVEL LIGHT<br>LIVE SLOW</span></div><p class="story-photo-caption">A LITTLE SPACE FOR POSSIBILITY.</p><div class="story-number" aria-hidden="true">沿途，都是生活。</div></div>
+        <div class="story-copy"><p class="eyebrow">THE J-TOUR WAY</p><h2 id="story-title">不必走得很遠，<br>也能重新看見生活。</h2><p id="story-body">【品牌示例文案】我們相信，旅行不只是目的地，而是一種對生活保持好奇的方式。</p><a class="text-link" href="#contact">與我們聊聊 <span aria-hidden="true">↗</span></a></div>
+      </div>
+    </section>
+    <section class="journal section-space wrap" id="journal" aria-labelledby="journal-title">
+      <div class="section-heading"><div><p class="eyebrow">NOTES ALONG THE WAY</p><h2 id="journal-title">給生活一點<span class="serif-accent">留白</span></h2></div><span class="small-note">生活靈感 · 編輯示例</span></div>
+      <div class="journal-grid">
+        <article class="journal-card"><div class="journal-art journal-walk" aria-hidden="true"><span class="sun"></span><span class="hill"></span><span class="path"></span></div><p class="eyebrow">01 / SLOW TRAVEL</p><h3>沒有行程的週末，也很好。</h3><p>走一條不熟悉的小路，在巷口喝杯咖啡。離開熟悉的節奏，就是一場小小的旅行。</p></article>
+        <article class="journal-card"><div class="journal-art journal-still" aria-hidden="true"><span class="vase"></span><span class="stem"></span><span class="table"></span></div><p class="eyebrow">02 / MINDFUL LIVING</p><h3>喜歡的東西，不必太多。</h3><p>留下一件用得順手的器物、一個剛剛好的角落。生活的豐盛，有時候來自簡單。</p></article>
+      </div>
+    </section>
+    <section class="contact-section" id="contact" aria-labelledby="contact-title">
+      <div class="wrap contact-inner"><div><p class="eyebrow">LET'S KEEP IN TOUCH</p><h2 id="contact-title">下一段旅程，<br>想聽聽你的故事。</h2><p id="contact-body">商品問題、合作提案，或只是想打聲招呼，<br>歡迎透過品牌正式客服與我們聯繫。</p><p class="contact-hours" id="contact-hours"></p></div><div class="contact-actions"><a class="button primary" id="contact-email" hidden>寫信給我們 <span aria-hidden="true">↗</span></a><p id="contact-unconfigured">客服信箱尚未設定。此為展示網站，<br>請勿在此提供付款或訂單個人資料。</p><a class="text-link" id="account-link" hidden target="_blank" rel="noopener noreferrer">前往 Shopify 會員中心查詢訂單 ↗</a><p class="small-note">訂單查詢與身分驗證皆由 Shopify 安全處理。</p></div></div>
+    </section>
+  </main>
+  <footer class="site-footer wrap">
+    <div class="footer-top"><a class="wordmark" href="./" aria-label="J-TOUR 首頁">J-TOUR<span class="brand-dot" aria-hidden="true">●</span></a><p id="footer-tagline">把日常，過成一段旅程。</p><a class="text-link" id="instagram-link" target="_blank" rel="noopener noreferrer" hidden>INSTAGRAM ↗</a><a href="#main" class="back-top">回到頂端 ↑</a></div>
+    <div class="footer-bottom"><span>© <span id="year">2026</span> <span id="footer-brand">J-TOUR</span> · 品牌視覺與文案為示例</span><span>安全結帳由 Shopify 提供</span><a id="admin-link" target="_blank" rel="noopener noreferrer" hidden>商店管理 ↗</a></div>
+  </footer>
+  <div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
+  <dialog class="product-dialog" id="product-dialog" aria-labelledby="product-title">
+    <button class="dialog-close icon-button" id="close-product" aria-label="關閉商品詳情">×</button>
+    <div class="product-detail"><div class="detail-image"><img id="product-image" src="./assets/placeholder.svg" alt="" width="700" height="800"></div><div class="detail-copy"><p class="eyebrow" id="product-type">日常選物</p><h2 id="product-title">商品詳情</h2><p class="detail-price" id="product-price"></p><p id="product-description"></p><div id="product-controls"><label class="field-label" for="product-variant">款式 / 規格</label><select id="product-variant"></select><label class="field-label" for="product-quantity">數量</label><input id="product-quantity" type="number" value="1" min="1" max="99" step="1" inputmode="numeric"><button class="button primary full-width" id="add-to-cart" disabled>加入購物袋 <span aria-hidden="true">＋</span></button></div><p class="dialog-status" id="product-status" role="status" aria-live="polite"></p><p class="small-note">實際價格、庫存、運費與稅金以 Shopify 結帳頁為準。</p></div></div>
+  </dialog>
+  <dialog class="cart-dialog" id="cart-dialog" aria-labelledby="cart-title">
+    <div class="cart-header"><div><p class="eyebrow">YOUR TRAVEL COMPANIONS</p><h2 id="cart-title">你的購物袋</h2></div><button class="icon-button" id="close-cart" aria-label="關閉購物袋">×</button></div>
+    <p class="dialog-status" id="cart-status" role="status" aria-live="polite"></p>
+    <div class="cart-lines" id="cart-lines"></div>
+    <div class="cart-summary" id="cart-summary" hidden><p><span>商品小計</span><strong id="cart-subtotal"></strong></p><p><span>預估總計</span><strong id="cart-total"></strong></p><p class="small-note">金額由 Shopify 即時計算；運費、折扣及最終稅金於結帳確認。結帳不會在本站蒐集信用卡資訊。</p></div>
+    <div class="cart-footer"><a class="button primary full-width" id="checkout" hidden>前往 Shopify 安全結帳 <span aria-hidden="true">↗</span></a><button class="button secondary full-width" id="refresh-cart">重新整理購物袋</button><button class="text-link" id="continue-shopping">繼續逛逛 →</button></div>
+  </dialog>
+  <noscript><div class="noscript-note">本頁的選物、購物袋與結帳功能需要 JavaScript。請啟用 JavaScript，或透過品牌正式聯絡方式洽詢；展示內容不提供交易。</div></noscript>
+</body>
+</html>
